@@ -1,0 +1,32 @@
+# Python-specific files and directories
+__pycache__/
+*.pyc
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Virtual environment
+.mvenv/
+env/
+mvenv/
+
+#Temporary files & Logs
+*.log
+*.tmp
+*.temp
+/tmp
+test.html
+test.py
+
+# VS Code specific
+.vscode/
+.history/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
