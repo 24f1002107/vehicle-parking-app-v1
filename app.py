@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from database import db
 from controllers.controllers import controllers
+import secrets
 
 def setup_app():
     app = Flask(__name__)
@@ -9,7 +10,7 @@ def setup_app():
     db.init_app(app)
     app.app_context().push()
     app.register_blueprint(controllers)
-    app.secret_key = "alpha6987"
+    app.secret_key = secrets.token_hex(16)
     return app
 
 app = setup_app()

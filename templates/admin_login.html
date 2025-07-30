@@ -1,0 +1,62 @@
+{% extends 'index.html' %}
+{% block title %}
+Admin Login
+{% endblock %}
+
+{% block content %}
+<body class="text-center">
+    <div class="container">
+        <form method="POST" class="form-admin-login" style="color:white">
+            {{form.hidden_tag()}}
+            <h1 class="h3 mb-3 font-weight-normal">
+                Admin Login
+            </h1>
+            <p class="text-muted">Administrator Access Only</p>
+            <br>
+            
+            {# Email Field #}
+            {{ form.email.label() }}
+            {{ form.email(class="form-control", placeholder="Admin Email Address") }}
+            {% if form.email.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Password Field #}
+            {{ form.password.label() }}
+            {{ form.password(class="form-control", placeholder="Admin Password") }}
+            {% if form.password.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.password.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <br>
+
+            {{ form.submit(class="btn btn-lg btn-block btn-warning") }}
+
+            {# General form errors #}
+            {% if form.errors and not form.email.errors and not form.password.errors %}
+                 <div class="alert alert-danger">
+                    {% for field, errors in form.errors.items() %}
+                        {% for error in errors %}
+                            <span>{{ field }}: {{ error }}</span><br>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <br>
+            <div class="checkbox mb-3">
+                <h6>Regular user?</h6>
+                <a class="btn btn-sm btn-secondary" href="{{ url_for('controllers.login') }}">User Login</a>
+            </div>
+        </form>
+    </div>
+</body>
+{% endblock %} 

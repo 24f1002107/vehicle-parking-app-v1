@@ -1,0 +1,82 @@
+{% extends 'index.html' %}
+{% block title %}
+Register Page
+{% endblock %}
+
+{% block content %}
+<body class="text-center">
+    <div class="container">
+        <form method="POST" class="form-register" style="color:white">
+            {{form.hidden_tag()}}
+            <h1 class="h3 mb-3 font-weight-normal">
+                Create your Account
+            </h1>
+            <br>
+            {# Full Name Field #}
+            {{ form.fullname.label() }}
+            {{ form.fullname(class="form-control", placeholder="Full Name") }}
+            {% if form.fullname.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.fullname.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Email Field #}
+            {{ form.email.label() }}
+            {{ form.email(class="form-control", placeholder="Email Address") }}
+            {% if form.email.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Password 1 Field #}
+            {{ form.password1.label() }}
+            {{ form.password1(class="form-control", placeholder="Password") }}
+            {% if form.password1.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.password1.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Password 2 Field #}
+            {{ form.password2.label() }}
+            {{ form.password2(class="form-control", placeholder="Confirm Password") }}
+            {% if form.password2.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.password2.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <br>
+
+            {{ form.submit(class="btn btn-lg btn-block btn-primary") }}
+
+            {# General form errors (e.g., if a field-specific error wasn't caught) #}
+            {% if form.errors and not form.fullname.errors and not form.email.errors and not form.password1.errors and not form.password2.errors %}
+                 <div class="alert alert-danger">
+                    {% for field, errors in form.errors.items() %}
+                        {% for error in errors %}
+                            <span>{{ field }}: {{ error }}</span><br>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <br>
+            <div class="checkbox mb-3">
+                <h6>Already have an account?</h6>
+                <a class="btn btn-sm btn-secondary" href="{{ url_for('controllers.login') }}">Login here!</a>
+            </div>
+        </form>
+    </div>
+</body>
+{% endblock %}

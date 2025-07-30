@@ -28,29 +28,61 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="/home">Home <span class="sr-only">(current)</span></a>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{url_for('controllers.home')}}">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/parkingLots">Parking Lots</a>
+                    <a class="nav-link" href="{{url_for('controllers.parking_lots')}}">Parking Lots</a>
                 </li>
             </ul>
             <ul class="navbar-nav">
-                {% block NavElements %}
+                {% if session.get('user_id') %}
+                    {% if session.get('user_role') == 'admin' %}
+                        <li class="nav-item">
+                            <span class="navbar-text mr-3">Admin: {{ session.get('user_fullname', 'Admin') }}</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('controllers.admin_dashboard')}}">Dashboard</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <span class="navbar-text mr-3">{{ session.get('user_fullname', 'User') }}</span>
+                        </li>
+                    {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Login</a>
+                        <a class="nav-link" href="{{url_for('controllers.logout')}}">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{url_for('controllers.login')}}">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Register</a>
+                        <a class="nav-link" href="{{url_for('controllers.register')}}">Register</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Admin</a>
+                        <a class="nav-link" href="{{url_for('controllers.admin_login')}}">Admin</a>
                     </li>
-                {% endblock %}
+                {% endif %}
             </ul>
         </div>
         </nav>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         {% block content %}
+
         {% endblock %}
 
         <!-- Optional JavaScript; choose one of the two! -->

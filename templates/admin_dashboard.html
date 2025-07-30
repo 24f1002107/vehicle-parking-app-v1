@@ -1,0 +1,68 @@
+{% extends 'index.html' %}
+{% block title %}
+Admin Dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2>Admin Dashboard</h2>
+                    <p class="mb-0">Welcome, {{ session.get('user_fullname', 'Admin') }}!</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-secondary text-white mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">User Management</h5>
+                                    <p class="card-text">Manage registered users and their accounts.</p>
+                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-secondary text-white mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Parking Lots</h5>
+                                    <p class="card-text">Manage parking lots and their configurations.</p>
+                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-secondary text-white mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Reports & Analytics</h5>
+                                    <p class="card-text">View parking statistics and revenue reports.</p>
+                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-secondary text-white mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">System Settings</h5>
+                                    <p class="card-text">Configure system parameters and preferences.</p>
+                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('controllers.logout') }}" class="btn btn-danger">
+                            Logout
+                        </a>
+                        <a href="{{ url_for('controllers.home') }}" class="btn btn-info">
+                            Go to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
