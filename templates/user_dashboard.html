@@ -1,0 +1,125 @@
+{% extends 'index.html' %}
+{% block title %}
+User Dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2>👤 User Dashboard</h2>
+                    <p class="mb-0">Welcome, {{ session.get('user_fullname', 'User') }}!</p>
+                </div>
+                <div class="card-body">
+                    <!-- Quick Actions -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('controllers.parking_lots') }}" class="btn btn-success btn-lg btn-block mb-2">
+                                🚗 Book Parking Spot
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('controllers.user_dashboard') }}" class="btn btn-info btn-lg btn-block mb-2">
+                                📊 My Parking History
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Current Reservations -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>🚗 Current Parking Reservations</h4>
+                            {% if reservations_with_details %}
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Spot ID</th>
+                                                <th>Parking Lot</th>
+                                                <th>Vehicle Number</th>
+                                                <th>Parking Time</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in reservations_with_details %}
+                                            <tr>
+                                                <td>{{ item.spot.id }}</td>
+                                                <td>{{ item.lot.location }}</td>
+                                                <td>{{ item.reservation.veichleNumber or 'N/A' }}</td>
+                                                <td>{{ item.reservation.parking_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                <td>
+                                                    <form method="POST" action="{{ url_for('controllers.release_parking_spot', reservation_id=item.reservation.id) }}" 
+                                                          style="display: inline;">
+                                                        <button type="submit" class="btn btn-sm btn-warning" 
+                                                                onclick="return confirm('Are you sure you want to release this parking spot?')">
+                                                            Release Spot
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <h5>No Active Reservations</h5>
+                                    <p>You don't have any active parking reservations. Click "Book Parking Spot" to reserve a spot.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Parking Statistics -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>Active Spots</h5>
+                                    <h3>{{ reservations_with_details|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Spots Used</h5>
+                                    <h3>{{ reservations_with_details|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>Current Cost</h5>
+                                    <h3>₹{{ reservations_with_details|sum(attribute='reservation.parkingcost') }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>Member Since</h5>
+                                    <h3>Today</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('controllers.logout') }}" class="btn btn-danger">
+                            Logout
+                        </a>
+                        <a href="{{ url_for('controllers.home') }}" class="btn btn-info">
+                            Go to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

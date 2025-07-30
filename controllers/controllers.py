@@ -3,6 +3,7 @@ from models.models import User, ParkingLot, ParkingSpot, ReserveParkingSpot
 from controllers.forms import RegisterForm, LoginForm, AdminLoginForm, ParkingLotForm
 from database import db
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 controllers = Blueprint('controllers', __name__, template_folder='templates')
 
@@ -13,11 +14,21 @@ def home():
 
 @controllers.route('/parkinglots')
 def parking_lots():
+    # Check if user is logged in
+    if not session.get('user_id'):
+        flash('Please login to view parking lots.', 'warning')
+        return redirect(url_for('controllers.login'))
+    
     lots = ParkingLot.query.all()    
     return render_template('parking_lots.html', lots = lots)
 
 @controllers.route('/parkingspots')
 def parking_spots():
+    # Check if user is logged in
+    if not session.get('user_id'):
+        flash('Please login to view parking spots.', 'warning')
+        return redirect(url_for('controllers.login'))
+    
     spots = ParkingSpot.query.all()
     return render_template('parking_spots.html', spots=spots)
 
@@ -56,13 +67,118 @@ def login():
                 session['user_role'] = user.role
                 
                 flash(f'Welcome back, {user.fullname}!', 'success')
-                return redirect(url_for('controllers.home'))
+                return redirect(url_for('controllers.user_dashboard'))
             else:
                 flash('Admin users should use the admin login page.', 'warning')
         else:
             flash('Invalid email or password. Please try again.', 'danger')
     
     return render_template('login.html', form=form)
+
+@controllers.route('/user/dashboard')
+def user_dashboard():
+    # Check if user is logged in
+    if not session.get('user_id'):
+        flash('Please login to access your dashboard.', 'warning')
+        return redirect(url_for('controllers.login'))
+    
+    # Get user's current reservations
+    user_email = session.get('user_email')
+    current_reservations = ReserveParkingSpot.query.filter_by(email=user_email).all()
+    
+    # Get parking lot details for each reservation
+    reservations_with_details = []
+    for reservation in current_reservations:
+        spot = ParkingSpot.query.get(reservation.spotid)
+        lot = ParkingLot.query.get(reservation.lotid)
+        if spot and lot:
+            reservations_with_details.append({
+                'reservation': reservation,
+                'spot': spot,
+                'lot': lot
+            })
+    
+    return render_template('user_dashboard.html', reservations_with_details=reservations_with_details)
+
+@controllers.route('/user/book-spot/<int:lot_id>', methods=['POST'])
+def book_parking_spot(lot_id):
+    # Check if user is logged in
+    if not session.get('user_id'):
+        flash('Please login to book a parking spot.', 'warning')
+        return redirect(url_for('controllers.login'))
+    
+    user_email = session.get('user_email')
+    
+    # Find the first available spot in this lot
+    available_spot = ParkingSpot.query.filter_by(lotid=lot_id, status="A").first()
+    
+    if not available_spot:
+        flash('No available spots in this parking lot.', 'danger')
+        return redirect(url_for('controllers.parking_lots'))
+    
+    # Create reservation
+    reservation = ReserveParkingSpot(
+        spotid=available_spot.id,
+        lotid=lot_id,
+        email=user_email,
+        veichleNumber=request.form.get('vehicle_number', ''),
+        parking_time=datetime.now(),
+        parkingcost=0,
+        ispaid=0
+    )
+    
+    # Update spot status to occupied
+    available_spot.status = "O"
+    
+    # Update parking lot occupied count
+    parking_lot = ParkingLot.query.get(lot_id)
+    parking_lot.occupied += 1
+    
+    db.session.add(reservation)
+    db.session.commit()
+    
+    flash(f'Successfully booked spot {available_spot.id} in {parking_lot.location}!', 'success')
+    return redirect(url_for('controllers.user_dashboard'))
+
+@controllers.route('/user/release-spot/<int:reservation_id>', methods=['POST'])
+def release_parking_spot(reservation_id):
+    # Check if user is logged in
+    if not session.get('user_id'):
+        flash('Please login to release a parking spot.', 'warning')
+        return redirect(url_for('controllers.login'))
+    
+    user_email = session.get('user_email')
+    
+    # Get the reservation
+    reservation = ReserveParkingSpot.query.get_or_404(reservation_id)
+    
+    # Check if this reservation belongs to the current user
+    if reservation.email != user_email:
+        flash('You can only release your own parking spots.', 'danger')
+        return redirect(url_for('controllers.user_dashboard'))
+    
+    # Calculate parking cost (basic calculation)
+    parking_lot = ParkingLot.query.get(reservation.lotid)
+    parking_duration = datetime.now() - reservation.parking_time
+    hours_parked = parking_duration.total_seconds() / 3600
+    cost = int(hours_parked * parking_lot.price)
+    
+    # Update reservation
+    reservation.release_time = datetime.now()
+    reservation.parkingcost = cost
+    reservation.ispaid = 1
+    
+    # Update spot status to available
+    spot = ParkingSpot.query.get(reservation.spotid)
+    spot.status = "A"
+    
+    # Update parking lot occupied count
+    parking_lot.occupied -= 1
+    
+    db.session.commit()
+    
+    flash(f'Successfully released spot {spot.id}. Total cost: ₹{cost}', 'success')
+    return redirect(url_for('controllers.user_dashboard'))
 
 @controllers.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
