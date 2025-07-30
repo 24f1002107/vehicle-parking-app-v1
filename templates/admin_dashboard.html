@@ -13,40 +13,113 @@ Admin Dashboard
                     <p class="mb-0">Welcome, {{ session.get('user_fullname', 'Admin') }}!</p>
                 </div>
                 <div class="card-body">
+                    <!-- Quick Actions -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('controllers.add_parking_lot') }}" class="btn btn-success btn-lg btn-block mb-2">
+                                + Add New Parking Lot
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('controllers.admin_users') }}" class="btn btn-info btn-lg btn-block mb-2">
+                                👥 Manage Users
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Parking Lots Management Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4> Parking Lots Management</h4>
+                            </div>
+                            
+                            {% if parking_lots %}
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Location</th>
+                                                <th>Address</th>
+                                                <th>Pin Code</th>
+                                                <th>Price/Hour</th>
+                                                <th>Spots</th>
+                                                <th>Occupied</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for lot in parking_lots %}
+                                            <tr>
+                                                <td>{{ lot.id }}</td>
+                                                <td>{{ lot.location }}</td>
+                                                <td>{{ lot.address[:50] }}{% if lot.address|length > 50 %}...{% endif %}</td>
+                                                <td>{{ lot.pincode }}</td>
+                                                <td>₹{{ lot.price }}</td>
+                                                <td>{{ lot.maxSpots }}</td>
+                                                <td>
+                                                    <span class="badge badge-{% if lot.occupied > 0 %}warning{% else %}success{% endif %}">
+                                                        {{ lot.occupied }}/{{ lot.maxSpots }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{{ url_for('controllers.view_parking_lot_details', lot_id=lot.id) }}" 
+                                                           class="btn btn-sm btn-info">View Details</a>
+                                                        <a href="{{ url_for('controllers.edit_parking_lot', lot_id=lot.id) }}" 
+                                                           class="btn btn-sm btn-primary">Edit</a>
+                                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                                onclick="confirmDelete({{ lot.id }}, '{{ lot.location }}')">
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <h5>No Parking Lots Found</h5>
+                                    <p>Start by adding your first parking lot using the "Add New Parking Lot" button.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="card bg-secondary text-white mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">User Management</h5>
-                                    <p class="card-text">Manage registered users and their accounts.</p>
-                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Lots</h5>
+                                    <h3>{{ parking_lots|length }}</h3>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card bg-secondary text-white mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">Parking Lots</h5>
-                                    <p class="card-text">Manage parking lots and their configurations.</p>
-                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Spots</h5>
+                                    <h3>{{ parking_lots|sum(attribute='maxSpots') }}</h3>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card bg-secondary text-white mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">Reports & Analytics</h5>
-                                    <p class="card-text">View parking statistics and revenue reports.</p>
-                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>Occupied Spots</h5>
+                                    <h3>{{ parking_lots|sum(attribute='occupied') }}</h3>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card bg-secondary text-white mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">System Settings</h5>
-                                    <p class="card-text">Configure system parameters and preferences.</p>
-                                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>Available Spots</h5>
+                                    <h3>{{ (parking_lots|sum(attribute='maxSpots')) - (parking_lots|sum(attribute='occupied')) }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -65,4 +138,36 @@ Admin Dashboard
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the parking lot "<span id="lotName"></span>"?</p>
+                <p class="text-warning">This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(lotId, lotName) {
+    document.getElementById('lotName').textContent = lotName;
+    document.getElementById('deleteForm').action = '/admin/parking-lots/delete/' + lotId;
+    $('#deleteModal').modal('show');
+}
+</script>
 {% endblock %} 

@@ -1,0 +1,103 @@
+{% extends 'index.html' %}
+{% block title %}
+Edit Parking Lot
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h3>✏️ Edit Parking Lot</h3>
+                    <p class="mb-0">Update parking lot details and spot count</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.prime_location_name.label(class="form-label") }}
+                            {{ form.prime_location_name(class="form-control", placeholder="e.g., Central Mall Parking") }}
+                            {% if form.prime_location_name.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.prime_location_name.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.address.label(class="form-label") }}
+                            {{ form.address(class="form-control", rows="3", placeholder="Enter complete address") }}
+                            {% if form.address.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.address.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pincode.label(class="form-label") }}
+                                    {{ form.pincode(class="form-control", placeholder="e.g., 600001") }}
+                                    {% if form.pincode.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {% for error in form.pincode.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.price.label(class="form-label") }}
+                                    {{ form.price(class="form-control", placeholder="e.g., 50") }}
+                                    {% if form.price.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {% for error in form.price.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.maxSpots.label(class="form-label") }}
+                            {{ form.maxSpots(class="form-control", placeholder="e.g., 20") }}
+                            <small class="form-text text-muted">
+                                Current spots: {{ parking_lot.maxSpots }} | 
+                                Increasing will add more spots, decreasing will remove available spots only.
+                            </small>
+                            {% if form.maxSpots.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.maxSpots.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary btn-lg btn-block", value="Update Parking Lot") }}
+                        </div>
+                    </form>
+
+                    <div class="mt-3">
+                        <a href="{{ url_for('controllers.admin_dashboard') }}" class="btn btn-secondary">
+                            ← Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

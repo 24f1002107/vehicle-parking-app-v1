@@ -1,0 +1,180 @@
+{% extends 'index.html' %}
+{% block title %}
+Parking Lot Details
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2>🚗 Parking Lot Details</h2>
+                    <p class="mb-0">{{ parking_lot.location }}</p>
+                </div>
+                <div class="card-body">
+                    <!-- Parking Lot Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h4>Lot Information</h4>
+                            <table class="table table-dark">
+                                <tr>
+                                    <td><strong>Location:</strong></td>
+                                    <td>{{ parking_lot.location }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Address:</strong></td>
+                                    <td>{{ parking_lot.address }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pin Code:</strong></td>
+                                    <td>{{ parking_lot.pincode }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Price per Hour:</strong></td>
+                                    <td>₹{{ parking_lot.price }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Spots:</strong></td>
+                                    <td>{{ parking_lot.maxSpots }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Occupied Spots:</strong></td>
+                                    <td>{{ parking_lot.occupied }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Available Spots:</strong></td>
+                                    <td>{{ parking_lot.maxSpots - parking_lot.occupied }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Quick Stats</h4>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="card bg-success text-white mb-2">
+                                        <div class="card-body text-center">
+                                            <h5>Available</h5>
+                                            <h3>{{ parking_lot.maxSpots - parking_lot.occupied }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-warning text-white mb-2">
+                                        <div class="card-body text-center">
+                                            <h5>Occupied</h5>
+                                            <h3>{{ parking_lot.occupied }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parking Spots Grid -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Parking Spots Status</h4>
+                            <div class="parking-spots-grid">
+                                {% for spot in parking_spots %}
+                                <div class="spot-item {% if spot.status == 'O' %}occupied{% else %}available{% endif %}">
+                                    <div class="spot-number">{{ spot.id }}</div>
+                                    <div class="spot-status">
+                                        {% if spot.status == 'O' %}
+                                            <span class="badge badge-danger">Occupied</span>
+                                        {% else %}
+                                            <span class="badge badge-success">Available</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Occupied Spots Details -->
+                    {% if occupied_spots_with_details %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Occupied Spots Details</h4>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Spot ID</th>
+                                            <th>User Name</th>
+                                            <th>Email</th>
+                                            <th>Vehicle Number</th>
+                                            <th>Parking Time</th>
+                                            <th>Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in occupied_spots_with_details %}
+                                        <tr>
+                                            <td>{{ item.spot.id }}</td>
+                                            <td>{{ item.user.fullname if item.user else 'N/A' }}</td>
+                                            <td>{{ item.reservation.email }}</td>
+                                            <td>{{ item.reservation.veichleNumber or 'N/A' }}</td>
+                                            <td>{{ item.reservation.parking_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            <td>₹{{ item.reservation.parkingcost or 0 }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('controllers.admin_dashboard') }}" class="btn btn-secondary">
+                            ← Back to Dashboard
+                        </a>
+                        <a href="{{ url_for('controllers.edit_parking_lot', lot_id=parking_lot.id) }}" class="btn btn-primary">
+                            Edit Parking Lot
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.parking-spots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.spot-item {
+    border: 2px solid #666;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    background-color: #2c3e50;
+}
+
+.spot-item.available {
+    border-color: #28a745;
+    background-color: #155724;
+}
+
+.spot-item.occupied {
+    border-color: #dc3545;
+    background-color: #721c24;
+}
+
+.spot-number {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.spot-status {
+    font-size: 12px;
+}
+</style>
+{% endblock %} 
