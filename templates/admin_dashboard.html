@@ -15,19 +15,24 @@ Admin Dashboard
                 <div class="card-body">
                     <!-- Quick Actions -->
                     <div class="row mb-4">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="{{ url_for('controllers.add_parking_lot') }}" class="btn btn-success btn-lg btn-block mb-2">
                                 + Add New Parking Lot
                             </a>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="{{ url_for('controllers.admin_users') }}" class="btn btn-info btn-lg btn-block mb-2">
                                 👥 Manage Users
                             </a>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="{{ url_for('controllers.admin_parking_records') }}" class="btn btn-warning btn-lg btn-block mb-2">
                                 📊 All Parking Records
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('controllers.admin_search') }}" class="btn btn-primary btn-lg btn-block mb-2">
+                                🔍 Search System
                             </a>
                         </div>
                     </div>

@@ -475,6 +475,61 @@ def admin_parking_records():
     
     return render_template('admin_parking_records.html', reservations_with_details=reservations_with_details)
 
+@controllers.route('/admin/search')
+def admin_search():
+    # Check if user is logged in and is admin
+    if not session.get('user_id') or session.get('user_role') != 'admin':
+        flash('Access denied. Admin login required.', 'danger')
+        return redirect(url_for('controllers.admin_login'))
+    
+    query = request.args.get('q', '').strip()
+    search_type = request.args.get('type', 'all')
+    
+    results = {
+        'users': [],
+        'spots': [],
+        'parking_lots': [],
+        'reservations': []
+    }
+    
+    if query:
+        # Search users
+        if search_type in ['all', 'users']:
+            users = User.query.filter(
+                (User.fullname.ilike(f'%{query}%')) |
+                (User.email.ilike(f'%{query}%'))
+            ).all()
+            results['users'] = users
+        
+        # Search parking spots
+        if search_type in ['all', 'spots']:
+            spots = ParkingSpot.query.join(ParkingLot).filter(
+                (ParkingSpot.id == query) |
+                (ParkingLot.location.ilike(f'%{query}%'))
+            ).all()
+            results['spots'] = spots
+        
+        # Search parking lots
+        if search_type in ['all', 'lots']:
+            lots = ParkingLot.query.filter(
+                (ParkingLot.location.ilike(f'%{query}%')) |
+                (ParkingLot.address.ilike(f'%{query}%')) |
+                (ParkingLot.pincode == query if query.isdigit() else False)
+            ).all()
+            results['parking_lots'] = lots
+        
+        # Search reservations
+        if search_type in ['all', 'reservations']:
+            reservations = ReserveParkingSpot.query.join(User).join(ParkingLot).filter(
+                (User.fullname.ilike(f'%{query}%')) |
+                (User.email.ilike(f'%{query}%')) |
+                (ParkingLot.location.ilike(f'%{query}%')) |
+                (ReserveParkingSpot.veichleNumber.ilike(f'%{query}%'))
+            ).all()
+            results['reservations'] = reservations
+    
+    return render_template('admin_search.html', results=results, query=query, search_type=search_type)
+
 @controllers.route('/logout')
 def logout():
     session.clear()

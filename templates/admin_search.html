@@ -1,0 +1,245 @@
+{% extends 'index.html' %}
+{% block title %}
+Admin Search
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2>🔍 Admin Search</h2>
+                    <p class="mb-0">Search for users, parking spots, lots, and reservations</p>
+                </div>
+                <div class="card-body">
+                    <!-- Search Form -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <form method="GET" action="{{ url_for('controllers.admin_search') }}" class="form-inline justify-content-center">
+                                <div class="input-group mb-2 mr-sm-2" style="max-width: 400px;">
+                                    <input type="text" class="form-control" name="q" value="{{ query }}" 
+                                           placeholder="Search for users, spots, lots, or vehicle numbers...">
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                                <select name="type" class="form-control mb-2 mr-sm-2">
+                                    <option value="all" {% if search_type == 'all' %}selected{% endif %}>All</option>
+                                    <option value="users" {% if search_type == 'users' %}selected{% endif %}>Users</option>
+                                    <option value="spots" {% if search_type == 'spots' %}selected{% endif %}>Parking Spots</option>
+                                    <option value="lots" {% if search_type == 'lots' %}selected{% endif %}>Parking Lots</option>
+                                    <option value="reservations" {% if search_type == 'reservations' %}selected{% endif %}>Reservations</option>
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+
+                    {% if query %}
+                        <!-- Search Results -->
+                        <div class="row">
+                            <!-- Users Results -->
+                            {% if results.users %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card bg-secondary text-white">
+                                    <div class="card-header">
+                                        <h5>👥 Users ({{ results.users|length }})</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Email</th>
+                                                        <th>Role</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for user in results.users %}
+                                                    <tr>
+                                                        <td>{{ user.fullname }}</td>
+                                                        <td>{{ user.email }}</td>
+                                                        <td>
+                                                            <span class="badge badge-{% if user.role == 'admin' %}danger{% else %}info{% endif %}">
+                                                                {{ user.role }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge badge-{% if user.status == 0 %}success{% else %}warning{% endif %}">
+                                                                {% if user.status == 0 %}Active{% else %}Inactive{% endif %}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Parking Spots Results -->
+                            {% if results.spots %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card bg-secondary text-white">
+                                    <div class="card-header">
+                                        <h5>🚗 Parking Spots ({{ results.spots|length }})</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Spot ID</th>
+                                                        <th>Parking Lot</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for spot in results.spots %}
+                                                    <tr>
+                                                        <td>{{ spot.id }}</td>
+                                                        <td>{{ spot.parking_lot.location }}</td>
+                                                        <td>
+                                                            <span class="badge badge-{% if spot.status == 'A' %}success{% else %}warning{% endif %}">
+                                                                {% if spot.status == 'A' %}Available{% else %}Occupied{% endif %}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="{{ url_for('controllers.view_parking_lot_details', lot_id=spot.lotid) }}" 
+                                                               class="btn btn-sm btn-info">View Lot</a>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Parking Lots Results -->
+                            {% if results.parking_lots %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card bg-secondary text-white">
+                                    <div class="card-header">
+                                        <h5>🏢 Parking Lots ({{ results.parking_lots|length }})</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Location</th>
+                                                        <th>Address</th>
+                                                        <th>Spots</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for lot in results.parking_lots %}
+                                                    <tr>
+                                                        <td>{{ lot.location }}</td>
+                                                        <td>{{ lot.address[:30] }}{% if lot.address|length > 30 %}...{% endif %}</td>
+                                                        <td>
+                                                            <span class="badge badge-{% if lot.occupied > 0 %}warning{% else %}success{% endif %}">
+                                                                {{ lot.occupied }}/{{ lot.maxSpots }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="{{ url_for('controllers.view_parking_lot_details', lot_id=lot.id) }}" 
+                                                               class="btn btn-sm btn-info">View Details</a>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Reservations Results -->
+                            {% if results.reservations %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card bg-secondary text-white">
+                                    <div class="card-header">
+                                        <h5>📋 Reservations ({{ results.reservations|length }})</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Spot</th>
+                                                        <th>Lot</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for reservation in results.reservations %}
+                                                    <tr>
+                                                        <td>{{ reservation.user_email_rel.fullname if reservation.user_email_rel else 'N/A' }}</td>
+                                                        <td>{{ reservation.spotid }}</td>
+                                                        <td>{{ reservation.parking_lot_rel.location }}</td>
+                                                        <td>
+                                                            <span class="badge badge-{% if reservation.release_time %}success{% else %}warning{% endif %}">
+                                                                {% if reservation.release_time %}Completed{% else %}Active{% endif %}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- No Results Message -->
+                        {% if not results.users and not results.spots and not results.parking_lots and not results.reservations %}
+                        <div class="alert alert-info">
+                            <h5>No Results Found</h5>
+                            <p>No matches found for "{{ query }}". Try searching with different keywords or check the search type.</p>
+                        </div>
+                        {% endif %}
+
+                    {% else %}
+                        <!-- Search Instructions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h5>Search Instructions</h5>
+                                    <ul class="mb-0">
+                                        <li><strong>Users:</strong> Search by name or email</li>
+                                        <li><strong>Parking Spots:</strong> Search by spot ID or parking lot name</li>
+                                        <li><strong>Parking Lots:</strong> Search by location, address, or pincode</li>
+                                        <li><strong>Reservations:</strong> Search by user name, email, lot name, or vehicle number</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('controllers.admin_dashboard') }}" class="btn btn-secondary">
+                            ← Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
