@@ -1,8 +1,18 @@
 from flask import Flask, render_template
-app = Flask(__name__)
+from database import db
+from controllers.controllers import controllers
 
-@app.route('/')
-@app.route('/home')
-def home():
-    return render_template('index.html')
+def setup_app():
+    app = Flask(__name__)
+    app.debug=True
+    app.config["SQLALCHEMY_DATABASE_URI"]= 'sqlite:///parking.db'
+    db.init_app(app)
+    app.app_context().push()
+    app.register_blueprint(controllers)
+    app.secret_key = "alpha6987"
+    return app
 
+app = setup_app()
+
+if __name__ == "__main__":
+    app.run()

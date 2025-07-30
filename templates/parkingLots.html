@@ -1,0 +1,41 @@
+{% extends 'index.html' %}
+
+{% block title %}
+    Parking Lots - VeePark 
+{% endblock%}
+
+{% block content %}
+
+<h1>Parking Lots</h1>
+
+<table class="table table-hover table-dark">
+  <thead>
+    <tr>
+    <th scope="col">ID</th>
+    <th scope="col">Location</th>
+    <th scope="col">Pincode</th>
+    <th scope="col">Price</th>
+    <th scope="col">Address</th>
+    <th scope="col">Max Spots</th>
+    <th scope="col">Available</th>
+    <th scope="'col">Book</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for lot in lots %}
+    <tr>
+      <td>{{lot.id}}</td>
+      <td>{{lot.location}}</td>
+      <td>{{lot.pincode}}</td>
+      <td>Rs. {{lot.price}}</td>
+      <td>{{lot.address}}</td>
+      <td>{{lot.maxSpots}}</td>
+      <td>{{lot.maxSpots-lot.occupied}}</td>
+      <td>
+        <button class="btn btn-outline btn-info">Book Now</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
