@@ -82,23 +82,78 @@ def user_dashboard():
         flash('Please login to access your dashboard.', 'warning')
         return redirect(url_for('controllers.login'))
     
-    # Get user's current reservations
+    # Get user's current reservations (not released yet)
     user_email = session.get('user_email')
-    current_reservations = ReserveParkingSpot.query.filter_by(email=user_email).all()
+    current_reservations = ReserveParkingSpot.query.filter_by(email=user_email, release_time=None).all()
     
-    # Get parking lot details for each reservation
-    reservations_with_details = []
+    # Get parking lot details for each current reservation
+    current_reservations_with_details = []
     for reservation in current_reservations:
         spot = ParkingSpot.query.get(reservation.spotid)
         lot = ParkingLot.query.get(reservation.lotid)
         if spot and lot:
-            reservations_with_details.append({
+            current_reservations_with_details.append({
                 'reservation': reservation,
                 'spot': spot,
                 'lot': lot
             })
     
-    return render_template('user_dashboard.html', reservations_with_details=reservations_with_details)
+    # Get user's parking history (released reservations)
+    historical_reservations = ReserveParkingSpot.query.filter_by(email=user_email).filter(ReserveParkingSpot.release_time.isnot(None)).order_by(ReserveParkingSpot.release_time.desc()).limit(10).all()
+    
+    # Get parking lot details for historical reservations
+    historical_reservations_with_details = []
+    for reservation in historical_reservations:
+        spot = ParkingSpot.query.get(reservation.spotid)
+        lot = ParkingLot.query.get(reservation.lotid)
+        if spot and lot:
+            # Calculate duration
+            duration = reservation.release_time - reservation.parking_time
+            hours = duration.total_seconds() / 3600
+            
+            historical_reservations_with_details.append({
+                'reservation': reservation,
+                'spot': spot,
+                'lot': lot,
+                'duration_hours': round(hours, 2)
+            })
+    
+    return render_template('user_dashboard.html', 
+                         current_reservations_with_details=current_reservations_with_details,
+                         historical_reservations_with_details=historical_reservations_with_details)
+
+@controllers.route('/user/parking-history')
+def user_parking_history():
+    # Check if user is logged in
+    if not session.get('user_id'):
+        flash('Please login to view your parking history.', 'warning')
+        return redirect(url_for('controllers.login'))
+    
+    user_email = session.get('user_email')
+    
+    # Get all user's parking history (both current and historical)
+    all_reservations = ReserveParkingSpot.query.filter_by(email=user_email).order_by(ReserveParkingSpot.parking_time.desc()).all()
+    
+    # Get parking lot details for all reservations
+    all_reservations_with_details = []
+    for reservation in all_reservations:
+        spot = ParkingSpot.query.get(reservation.spotid)
+        lot = ParkingLot.query.get(reservation.lotid)
+        if spot and lot:
+            # Calculate duration if released
+            duration_hours = None
+            if reservation.release_time:
+                duration = reservation.release_time - reservation.parking_time
+                duration_hours = round(duration.total_seconds() / 3600, 2)
+            
+            all_reservations_with_details.append({
+                'reservation': reservation,
+                'spot': spot,
+                'lot': lot,
+                'duration_hours': duration_hours
+            })
+    
+    return render_template('user_parking_history.html', reservations_with_details=all_reservations_with_details)
 
 @controllers.route('/user/book-spot/<int:lot_id>', methods=['POST'])
 def book_parking_spot(lot_id):
@@ -385,6 +440,40 @@ def admin_users():
         })
     
     return render_template('admin_users.html', users_with_parking=users_with_parking)
+
+@controllers.route('/admin/parking-records')
+def admin_parking_records():
+    # Check if user is logged in and is admin
+    if not session.get('user_id') or session.get('user_role') != 'admin':
+        flash('Access denied. Admin login required.', 'danger')
+        return redirect(url_for('controllers.admin_login'))
+    
+    # Get all parking records with user details
+    all_reservations = ReserveParkingSpot.query.order_by(ReserveParkingSpot.parking_time.desc()).all()
+    
+    # Get complete details for each reservation
+    reservations_with_details = []
+    for reservation in all_reservations:
+        spot = ParkingSpot.query.get(reservation.spotid)
+        lot = ParkingLot.query.get(reservation.lotid)
+        user = User.query.filter_by(email=reservation.email).first()
+        
+        if spot and lot:
+            # Calculate duration if released
+            duration_hours = None
+            if reservation.release_time:
+                duration = reservation.release_time - reservation.parking_time
+                duration_hours = round(duration.total_seconds() / 3600, 2)
+            
+            reservations_with_details.append({
+                'reservation': reservation,
+                'spot': spot,
+                'lot': lot,
+                'user': user,
+                'duration_hours': duration_hours
+            })
+    
+    return render_template('admin_parking_records.html', reservations_with_details=reservations_with_details)
 
 @controllers.route('/logout')
 def logout():

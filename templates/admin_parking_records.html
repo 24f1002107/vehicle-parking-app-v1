@@ -1,0 +1,226 @@
+{% extends 'index.html' %}
+{% block title %}
+Admin - Parking Records
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2>📊 All Parking Records</h2>
+                    <p class="mb-0">Complete overview of all parking sessions in the system</p>
+                </div>
+                <div class="card-body">
+                    <!-- Overall Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Records</h5>
+                                    <h3>{{ reservations_with_details|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>Completed Sessions</h5>
+                                    <h3>{{ reservations_with_details|selectattr('reservation.release_time')|list|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>Active Sessions</h5>
+                                    <h3>{{ reservations_with_details|rejectattr('reservation.release_time')|list|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>Total Revenue</h5>
+                                    <h3>₹{{ reservations_with_details|sum(attribute='reservation.parkingcost') }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- All Parking Records -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>📋 Complete Parking Records</h4>
+                            {% if reservations_with_details %}
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>User</th>
+                                                <th>Email</th>
+                                                <th>Spot ID</th>
+                                                <th>Parking Lot</th>
+                                                <th>Vehicle Number</th>
+                                                <th>Parking Time</th>
+                                                <th>Release Time</th>
+                                                <th>Duration</th>
+                                                <th>Cost</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in reservations_with_details %}
+                                            <tr>
+                                                <td>{{ item.reservation.parking_time.strftime('%Y-%m-%d') }}</td>
+                                                <td>{{ item.user.fullname if item.user else 'N/A' }}</td>
+                                                <td>{{ item.reservation.email }}</td>
+                                                <td>{{ item.spot.id }}</td>
+                                                <td>{{ item.lot.location }}</td>
+                                                <td>{{ item.reservation.veichleNumber or 'N/A' }}</td>
+                                                <td>{{ item.reservation.parking_time.strftime('%H:%M') }}</td>
+                                                <td>
+                                                    {% if item.reservation.release_time %}
+                                                        {{ item.reservation.release_time.strftime('%H:%M') }}
+                                                    {% else %}
+                                                        <span class="text-warning">Active</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.duration_hours %}
+                                                        <span class="badge badge-success">
+                                                            {{ item.duration_hours }} hours
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge badge-warning">Active</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.reservation.parkingcost > 0 %}
+                                                        ₹{{ item.reservation.parkingcost }}
+                                                    {% else %}
+                                                        <span class="text-warning">Pending</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.reservation.release_time %}
+                                                        <span class="badge badge-success">Completed</span>
+                                                    {% else %}
+                                                        <span class="badge badge-warning">Active</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <h5>No Parking Records</h5>
+                                    <p>No parking records found in the system.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Summary by Parking Lot -->
+                    {% if reservations_with_details %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>📈 Summary by Parking Lot</h4>
+                            <div class="row">
+                                {% set lot_summary = {} %}
+                                {% for item in reservations_with_details %}
+                                    {% set lot_name = item.lot.location %}
+                                    {% if lot_name not in lot_summary %}
+                                        {% set _ = lot_summary.update({lot_name: {'sessions': 0, 'total_cost': 0, 'total_hours': 0, 'active_sessions': 0}}) %}
+                                    {% endif %}
+                                    {% set _ = lot_summary[lot_name].update({'sessions': lot_summary[lot_name]['sessions'] + 1}) %}
+                                    {% if item.reservation.release_time %}
+                                        {% if item.reservation.parkingcost %}
+                                            {% set _ = lot_summary[lot_name].update({'total_cost': lot_summary[lot_name]['total_cost'] + item.reservation.parkingcost}) %}
+                                        {% endif %}
+                                        {% if item.duration_hours %}
+                                            {% set _ = lot_summary[lot_name].update({'total_hours': lot_summary[lot_name]['total_hours'] + item.duration_hours}) %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% set _ = lot_summary[lot_name].update({'active_sessions': lot_summary[lot_name]['active_sessions'] + 1}) %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% for lot_name, stats in lot_summary.items() %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card bg-secondary text-white">
+                                        <div class="card-header">
+                                            <h6>{{ lot_name }}</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>Total Sessions:</strong> {{ stats.sessions }}</p>
+                                            <p><strong>Active Sessions:</strong> {{ stats.active_sessions }}</p>
+                                            <p><strong>Total Revenue:</strong> ₹{{ stats.total_cost }}</p>
+                                            <p><strong>Total Hours:</strong> {{ stats.total_hours|round(1) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary by User -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>👥 Summary by User</h4>
+                            <div class="row">
+                                {% set user_summary = {} %}
+                                {% for item in reservations_with_details %}
+                                    {% set user_email = item.reservation.email %}
+                                    {% if user_email not in user_summary %}
+                                        {% set _ = user_summary.update({user_email: {'sessions': 0, 'total_cost': 0, 'total_hours': 0, 'active_sessions': 0, 'user_name': item.user.fullname if item.user else 'Unknown'}}) %}
+                                    {% endif %}
+                                    {% set _ = user_summary[user_email].update({'sessions': user_summary[user_email]['sessions'] + 1}) %}
+                                    {% if item.reservation.release_time %}
+                                        {% if item.reservation.parkingcost %}
+                                            {% set _ = user_summary[user_email].update({'total_cost': user_summary[user_email]['total_cost'] + item.reservation.parkingcost}) %}
+                                        {% endif %}
+                                        {% if item.duration_hours %}
+                                            {% set _ = user_summary[user_email].update({'total_hours': user_summary[user_email]['total_hours'] + item.duration_hours}) %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% set _ = user_summary[user_email].update({'active_sessions': user_summary[user_email]['active_sessions'] + 1}) %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% for user_email, stats in user_summary.items() %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card bg-secondary text-white">
+                                        <div class="card-header">
+                                            <h6>{{ stats.user_name }} ({{ user_email }})</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>Total Sessions:</strong> {{ stats.sessions }}</p>
+                                            <p><strong>Active Sessions:</strong> {{ stats.active_sessions }}</p>
+                                            <p><strong>Total Spent:</strong> ₹{{ stats.total_cost }}</p>
+                                            <p><strong>Total Hours:</strong> {{ stats.total_hours|round(1) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('controllers.admin_dashboard') }}" class="btn btn-secondary">
+                            ← Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
