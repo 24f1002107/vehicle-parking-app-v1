@@ -315,28 +315,58 @@ def edit_parking_lot(lot_id):
     form = ParkingLotForm()
     
     if form.validate_on_submit():
-        # Update parking lot details
+        # Check if trying to reduce slots to less than occupied spots
+        current_spots = ParkingSpot.query.filter_by(lotid=lot_id).count()
+        new_spots_count = form.maxSpots.data
+        occupied_spots = ParkingSpot.query.filter_by(lotid=lot_id, status="O").count()
+        
+        if new_spots_count < occupied_spots:
+            flash(f'Cannot reduce slots to {new_spots_count}. {occupied_spots} spots are currently occupied. The new number of spots must be at least {occupied_spots}.', 'danger')
+            return render_template('edit_parking_lot.html', form=form, parking_lot=parking_lot)
+        
+        # Update parking lot details (these can always be updated)
         parking_lot.location = form.prime_location_name.data
         parking_lot.address = form.address.data
         parking_lot.pincode = form.pincode.data
         parking_lot.price = form.price.data
+        parking_lot.maxSpots = new_spots_count
         
         # Handle spot count changes
-        current_spots = ParkingSpot.query.filter_by(lotid=lot_id).count()
-        new_spots_count = form.maxSpots.data
-        
-        if new_spots_count > current_spots:
+        if new_spots_count >= current_spots:
             # Add more spots
             for i in range(current_spots + 1, new_spots_count + 1):
                 new_spot = ParkingSpot(lotid=lot_id, status="A")
                 db.session.add(new_spot)
         elif new_spots_count < current_spots:
-            # Remove spots (only if they're available)
-            available_spots = ParkingSpot.query.filter_by(lotid=lot_id, status="A").limit(current_spots - new_spots_count).all()
+            # Remove spots (only if they're available and have no reservations)
+            spots_to_remove = current_spots - new_spots_count
+            available_spots = ParkingSpot.query.filter_by(lotid=lot_id, status="A").all()
+            
+            # Check if we have enough available spots to remove
+            if len(available_spots) < spots_to_remove:
+                flash(f'Cannot reduce slots. Only {len(available_spots)} spots are available, but you want to remove {spots_to_remove} spots.', 'danger')
+                return render_template('edit_parking_lot.html', form=form, parking_lot=parking_lot)
+            
+            # Get spots that can be safely deleted (no reservations)
+            spots_to_delete = []
             for spot in available_spots:
+                if len(spots_to_delete) >= spots_to_remove:
+                    break
+                    
+                # Check if this spot has any reservations
+                reservations = ReserveParkingSpot.query.filter_by(spotid=spot.id).count()
+                if reservations == 0:
+                    spots_to_delete.append(spot)
+            
+            # Check if we have enough spots to delete
+            if len(spots_to_delete) < spots_to_remove:
+                flash(f'Cannot reduce slots. Some available spots have existing reservations that cannot be deleted.', 'danger')
+                return render_template('edit_parking_lot.html', form=form, parking_lot=parking_lot)
+            
+            # Delete the spots that can be safely removed
+            for spot in spots_to_delete:
                 db.session.delete(spot)
         
-        parking_lot.maxSpots = new_spots_count
         db.session.commit()
         
         flash(f'Parking lot "{form.prime_location_name.data}" updated successfully!', 'success')

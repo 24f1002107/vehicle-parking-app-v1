@@ -74,8 +74,15 @@ Edit Parking Lot
                             {{ form.maxSpots(class="form-control", placeholder="e.g., 20") }}
                             <small class="form-text text-muted">
                                 Current spots: {{ parking_lot.maxSpots }} | 
-                                Increasing will add more spots, decreasing will remove available spots only.
+                                Occupied spots: {{ parking_lot.occupied }} | 
+                                Available spots: {{ parking_lot.maxSpots - parking_lot.occupied }}
                             </small>
+                            {% if parking_lot.occupied > 0 %}
+                                <div class="alert alert-info mt-2">
+                                    <strong>ℹ️ Info:</strong> This parking lot has {{ parking_lot.occupied }} occupied spots. 
+                                    You can reduce slots as long as the new number is at least {{ parking_lot.occupied }}.
+                                </div>
+                            {% endif %}
                             {% if form.maxSpots.errors %}
                                 <div class="alert alert-danger mt-2">
                                     {% for error in form.maxSpots.errors %}
