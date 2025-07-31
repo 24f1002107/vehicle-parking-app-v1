@@ -397,12 +397,26 @@ def delete_parking_lot(lot_id):
     if occupied_spots > 0:
         flash(f'Cannot delete parking lot. {occupied_spots} spots are currently occupied.', 'danger')
     else:
-        # Delete all parking spots for this lot
-        ParkingSpot.query.filter_by(lotid=lot_id).delete()
-        # Delete the parking lot
-        db.session.delete(parking_lot)
-        db.session.commit()
-        flash(f'Parking lot "{parking_lot.location}" deleted successfully!', 'success')
+        try:
+            # First, delete all reservations for spots in this lot
+            # Get all spot IDs for this lot
+            spot_ids = [spot.id for spot in ParkingSpot.query.filter_by(lotid=lot_id).all()]
+            
+            # Delete reservations for these spots
+            if spot_ids:
+                ReserveParkingSpot.query.filter(ReserveParkingSpot.spotid.in_(spot_ids)).delete(synchronize_session=False)
+            
+            # Then delete all parking spots for this lot
+            ParkingSpot.query.filter_by(lotid=lot_id).delete()
+            
+            # Finally, delete the parking lot
+            db.session.delete(parking_lot)
+            db.session.commit()
+            
+            flash(f'Parking lot "{parking_lot.location}" deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting parking lot: {str(e)}', 'danger')
     
     return redirect(url_for('controllers.admin_dashboard'))
 
