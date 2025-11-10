@@ -240,6 +240,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 👥 Authors
 
 - **Developer**: Aman Kumar
+- **Secondary Github ID**: [AmanChauhan16](https://github.com/AmanChauhan16)
 - **Project**: VeePark [Vehicle Parking App - V1]
 - **Version**: 1.0.0
 
@@ -247,7 +248,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support and questions:
 - Create an issue in the repository
-- Contact: 24f1002107@ds.study.iitm.ac.in
-- Documentation: [link-to-documentation]
+- Contact: [Email:Aman Kumar](24f1002107@ds.study.iitm.ac.in)
 
 ---
